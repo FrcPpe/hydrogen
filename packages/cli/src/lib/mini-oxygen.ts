@@ -4,10 +4,9 @@ import {
   outputContent,
 } from '@shopify/cli-kit/node/output';
 import {resolvePath} from '@shopify/cli-kit/node/path';
-import {fileExists, writeFile} from '@shopify/cli-kit/node/fs';
+import {fileExists} from '@shopify/cli-kit/node/fs';
 import colors from '@shopify/cli-kit/node/colors';
-import type {Request, Response} from '@shopify/mini-oxygen';
-import {startProfiler} from './profiling.js';
+import {renderSuccess} from '@shopify/cli-kit/node/ui';
 
 type MiniOxygenOptions = {
   root: string;
@@ -16,7 +15,6 @@ type MiniOxygenOptions = {
   buildPathClient: string;
   buildPathWorkerFile: string;
   environmentVariables?: {[key: string]: string};
-  profiling?: boolean;
 };
 
 export async function startMiniOxygen({
@@ -26,16 +24,20 @@ export async function startMiniOxygen({
   buildPathWorkerFile,
   buildPathClient,
   environmentVariables = {},
-  profiling = true,
 }: MiniOxygenOptions) {
-  const {createMiniOxygen} = await import('@shopify/mini-oxygen');
+  const {default: miniOxygen} = await import('@shopify/mini-oxygen');
+  const miniOxygenPreview =
+    miniOxygen.default ?? (miniOxygen as unknown as typeof miniOxygen.default);
 
   const dotenvPath = resolvePath(root, '.env');
 
-  const miniOxygenOptions = {
-    workDir: root,
+  const {port: actualPort} = await miniOxygenPreview({
     workerFile: buildPathWorkerFile,
+    assetsDir: buildPathClient,
+    publicPath: '',
+    port,
     watch,
+    autoReload: watch,
     modules: true,
     env: {
       ...environmentVariables,
@@ -50,34 +52,25 @@ export async function startMiniOxygen({
     buildWatchPaths: watch
       ? [resolvePath(root, buildPathWorkerFile)]
       : undefined,
-  };
-
-  const stopProfiler = profiling && (await startProfiler());
-
-  const miniOxygen = createMiniOxygen(miniOxygenOptions);
-
-  if (stopProfiler) {
-    await miniOxygen.init();
-    const profile = await stopProfiler();
-    await writeFile('./profile.cpuprofile', JSON.stringify(profile));
-  }
-
-  const {port: actualPort} = await miniOxygen.createServer({
-    port,
-    assetsDir: buildPathClient,
-    publicPath: '',
-    autoReload: watch,
-    onResponse: logResponse,
+    onResponse: (request, response) =>
+      // 'Request' and 'Response' types in MiniOxygen comes from
+      // Miniflare and are slightly different from standard types.
+      logResponse(
+        request as unknown as Request,
+        response as unknown as Response,
+      ),
   });
 
   const listeningAt = `http://localhost:${actualPort}`;
+  const graphiqlUrl = `${listeningAt}/graphiql`;
 
-  outputInfo(
-    outputContent`🚥 MiniOxygen server started at ${outputToken.link(
-      listeningAt,
-      listeningAt,
-    )}\n`,
-  );
+  renderSuccess({
+    headline: 'MiniOxygen development server running.',
+    body: [
+      `View Hydrogen app: ${listeningAt}`,
+      colors.dim(`\nView GraphiQL API browser: ${graphiqlUrl}`),
+    ],
+  });
 }
 
 export function logResponse(request: Request, response: Response) {
