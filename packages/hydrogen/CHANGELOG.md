@@ -1,5 +1,11 @@
 # @shopify/hydrogen
 
+## 2023.7.3
+
+### Patch Changes
+
+- Exported the type `CookieOptions` from `cartSetIdDefault` ([#1153](https://github.com/Shopify/hydrogen/pull/1153)) by [@remcolakens](https://github.com/remcolakens)
+
 ## 2023.7.2
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # @shopify/create-hydrogen
 
+## 4.2.2
+
+### Patch Changes
+
+- Add default exported route to enable the error to be caught in the root.tsx ErrorBoundary ([#1215](https://github.com/Shopify/hydrogen/pull/1215)) by [@josh-sanger](https://github.com/josh-sanger)
+
+- Updated dependencies [[`867866d1`](https://github.com/Shopify/hydrogen/commit/867866d18cba0324c240c15422c890ccb4fc1546)]:
+  - @shopify/cli-hydrogen@5.1.3
+
 ## 4.2.1
 
 ### Patch Changes
