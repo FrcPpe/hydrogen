@@ -15,6 +15,14 @@ import {
 import {HydrogenSession} from '~/lib/session.server';
 import {getLocaleFromRequest} from '~/lib/utils';
 
+function doStuff() {
+  for (let i = 0; i < 1000000000; i++) {
+    i = i + i - i;
+  }
+}
+
+doStuff();
+
 /**
  * Export a fetch handler in module format.
  */
